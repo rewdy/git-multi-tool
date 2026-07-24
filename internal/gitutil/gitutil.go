@@ -80,6 +80,20 @@ func HasUncommittedChanges(dir string) (bool, error) {
 	return out != "", nil
 }
 
+// StatusLines returns the raw `git status --porcelain` lines, one per
+// changed/untracked file, useful for previewing what a destructive
+// operation is about to wipe out.
+func StatusLines(dir string) ([]string, error) {
+	out, err := Run(dir, "status", "--porcelain")
+	if err != nil {
+		return nil, err
+	}
+	if out == "" {
+		return nil, nil
+	}
+	return strings.Split(out, "\n"), nil
+}
+
 // ResolveHash resolves any git revision expression to its full commit hash.
 func ResolveHash(dir, rev string) (string, error) {
 	return Run(dir, "rev-parse", rev)
@@ -221,4 +235,175 @@ func Count(dir string, t Target) (int, error) {
 		return 0, err
 	}
 	return len(commits), nil
+}
+
+// DefaultBranch tries to figure out the repository's "main" branch: the
+// one the remote's HEAD points at (origin/HEAD), falling back to
+// whichever of main/master actually exists locally if there's no remote
+// configured (e.g. a fresh local-only repo).
+func DefaultBranch(dir string) (string, error) {
+	if out, err := Run(dir, "symbolic-ref", "--short", "-q", "refs/remotes/origin/HEAD"); err == nil && out != "" {
+		return strings.TrimPrefix(out, "origin/"), nil
+	}
+
+	if out, err := Run(dir, "remote", "show", "origin"); err == nil {
+		for line := range strings.SplitSeq(out, "\n") {
+			line = strings.TrimSpace(line)
+			if name, ok := strings.CutPrefix(line, "HEAD branch: "); ok {
+				return name, nil
+			}
+		}
+	}
+
+	for _, candidate := range []string{"main", "master"} {
+		if _, err := Run(dir, "show-ref", "--verify", "--quiet", "refs/heads/"+candidate); err == nil {
+			return candidate, nil
+		}
+	}
+
+	return "", fmt.Errorf("couldn't figure out the default branch (no origin/HEAD, and no local main or master)")
+}
+
+// LocalBranches lists local branch names.
+func LocalBranches(dir string) ([]string, error) {
+	out, err := Run(dir, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+	if err != nil {
+		return nil, err
+	}
+	if out == "" {
+		return nil, nil
+	}
+	return strings.Split(out, "\n"), nil
+}
+
+// DeleteBranch force-deletes a local branch.
+func DeleteBranch(dir, name string) error {
+	_, err := Run(dir, "branch", "-D", name)
+	return err
+}
+
+// StashPush stashes staged and unstaged changes (not untracked files)
+// under the given message.
+func StashPush(dir, message string) error {
+	_, err := Run(dir, "stash", "push", "-m", message)
+	return err
+}
+
+// StashPop pops the most recent stash.
+func StashPop(dir string) error {
+	_, err := Run(dir, "stash", "pop")
+	return err
+}
+
+// HardResetAndClean discards all uncommitted changes (git reset --hard)
+// and removes untracked files (git clean -f). It's destructive and
+// irreversible; callers are expected to confirm with the user first.
+func HardResetAndClean(dir string) error {
+	if _, err := Run(dir, "reset", "--hard", "HEAD"); err != nil {
+		return err
+	}
+	_, err := Run(dir, "clean", "-fd")
+	return err
+}
+
+// Checkout switches to an existing local branch, streaming git's own
+// output.
+func Checkout(dir, branch string) error {
+	return RunInteractive(dir, nil, "checkout", branch)
+}
+
+// Pull runs a plain git pull in dir, streaming git's own output.
+func Pull(dir string) error {
+	return RunInteractive(dir, nil, "pull")
+}
+
+// Fetch runs a plain git fetch in dir, streaming git's own output.
+func Fetch(dir string) error {
+	return RunInteractive(dir, nil, "fetch")
+}
+
+// RebaseOnto rebases the current branch onto upstream, streaming git's
+// own output.
+func RebaseOnto(dir, upstream string) error {
+	return RunInteractive(dir, nil, "rebase", upstream)
+}
+
+// DiffStat returns a summary (`git diff --stat`) of what applying a
+// snapshot restore from rev would change in the working tree, without
+// changing anything.
+func DiffStat(dir, rev string) (string, error) {
+	return Run(dir, "diff", "HEAD", rev, "--stat")
+}
+
+// CheckSnapshotApplies reports whether restoring the working tree to rev
+// (via ApplySnapshot) would succeed, without actually changing anything.
+func CheckSnapshotApplies(dir, rev string) error {
+	diff, err := diffPatch(dir, rev)
+	if err != nil {
+		return err
+	}
+	if diff == "" {
+		return nil
+	}
+	cmd := exec.Command("git", "apply", "--check")
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	cmd.Stdin = strings.NewReader(diff)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return fmt.Errorf("git apply --check: %s", msg)
+	}
+	return nil
+}
+
+// ApplySnapshot rewrites the working tree to match rev's content,
+// without touching commit history, the index, or moving HEAD. It's
+// equivalent to `git diff HEAD <rev> | git apply`.
+func ApplySnapshot(dir, rev string) error {
+	diff, err := diffPatch(dir, rev)
+	if err != nil {
+		return err
+	}
+	if diff == "" {
+		return nil
+	}
+	cmd := exec.Command("git", "apply")
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	cmd.Stdin = strings.NewReader(diff)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return fmt.Errorf("git apply: %s", msg)
+	}
+	return nil
+}
+
+func diffPatch(dir, rev string) (string, error) {
+	cmd := exec.Command("git", "diff", "HEAD", rev)
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return "", fmt.Errorf("git diff HEAD %s: %s", rev, msg)
+	}
+	return stdout.String(), nil
 }

@@ -2,12 +2,13 @@
 
 A friendly forge for tidying up your git history.
 
-`git-multi-tool` (`gmt` for short) is a growing toolbox of
-trivial-but-tedious git maintenance chores, wrapped in a colorful little
-TUI so you don't have to remember the incantations. Built with
-[Cobra](https://github.com/spf13/cobra) for the CLI plumbing and Charm's
-[huh](https://github.com/charmbracelet/huh) and
-[Lip Gloss](https://github.com/charmbracelet/lipgloss) for the pretty
+`git-multi-tool` is a growing toolbox of trivial-but-tedious git
+maintenance chores, wrapped in a colorful little TUI so you don't have
+to remember the incantations. The examples below use its short alias,
+`gmt`, see [Setting up the `gmt` shortcut](#setting-up-the-gmt-shortcut)
+to configure it. Built with [Cobra](https://github.com/spf13/cobra) for
+the CLI plumbing and Charm's [huh](https://github.com/charmbracelet/huh)
+and [Lip Gloss](https://github.com/charmbracelet/lipgloss) for the pretty
 bits.
 
 ## Commands
@@ -67,17 +68,82 @@ replayed untouched. Because it rewrites history, commit hashes change;
 if you're working on a shared branch you'll need to force-push and give
 your collaborators a heads-up.
 
+### `nuke`
+
+```sh
+gmt nuke
+```
+
+Runs `git reset --hard HEAD && git clean -fd`, wiping out every tracked
+and untracked change in the working tree. Previews exactly which files
+are about to disappear and asks for confirmation first (`-y/--yes` to
+skip it). Completely destructive, there is no undo.
+
+### `sync`
+
+```sh
+gmt sync [--stash]
+```
+
+Fetches from `origin` and rebases your current branch onto the repo's
+default branch (whatever `origin/HEAD`, or a local `main`/`master`,
+resolves to). Refuses to run if you're already on the default branch.
+Pass `--stash` to automatically stash uncommitted changes before
+rebasing and pop them back afterward; without it you'll be prompted
+interactively if you have any. If the rebase conflicts, it leaves the
+repo mid-rebase with git's usual `--abort`/`--continue` escape hatches.
+
+### `back-to-main`
+
+```sh
+gmt back-to-main
+```
+
+The button for "I'm done with this branch." Checks out the repo's
+default branch, pulls the latest changes, and deletes the branch you
+were on. Shows the full plan (checkout, pull, delete) before doing
+anything, and if you've got uncommitted changes it asks whether to
+stash (`--stash`) or discard (`--clear`) them first. Refuses to run if
+you're already on the default branch or in a detached HEAD state.
+
+### `prune-branches`
+
+```sh
+gmt prune-branches
+```
+
+Lets you multi-select which local branches to delete in bulk. Your
+current branch and the repo's default branch are automatically excluded
+from the list, so you can't accidentally delete either. Pass `--all` to
+delete every eligible branch without the picker (still asks for
+confirmation unless you also pass `-y/--yes`).
+
+### `restore-snapshot`
+
+```sh
+gmt restore-snapshot -n <commit>
+```
+
+Rewrites your working tree's file contents to match an older commit,
+without moving HEAD, touching the index, or altering history in any way
+(it's `git diff HEAD <commit> | git apply` under the hood). Handy for
+peeking at or recovering old file contents without a real checkout. Not
+the same as `git revert`, nothing gets committed. Shows a `diff --stat`
+preview and validates the patch applies cleanly (`git apply --check`)
+before touching anything; if your working tree is dirty it offers to
+stash first as a safety net. Supports `--dry-run`.
+
 ## Building
 
 ```sh
-go build -o gmt .
+go build ./cmd/git-multi-tool
 ```
 
-To bake in a real version (shown by `gmt --version`), pass it via
-ldflags:
+To bake in a real version (shown by `git-multi-tool --version`), pass it
+via ldflags:
 
 ```sh
-go build -ldflags "-X git-multi-tool/cmd.version=v1.2.3" -o gmt .
+go build -ldflags "-X git-multi-tool/cmd.version=v1.2.3" ./cmd/git-multi-tool
 ```
 
 Without that flag, `--version` reports `dev`.
@@ -85,12 +151,29 @@ Without that flag, `--version` reports `dev`.
 ## Installing
 
 ```sh
-go install .
+go install ./cmd/git-multi-tool
 ```
 
-This drops a `gmt` binary into `$(go env GOBIN)` (or `$(go env GOPATH)/bin`
-if `GOBIN` isn't set), the command itself is also aliased as
-`git-multi-tool` if you'd rather type the full name.
+Go names the installed binary after its package directory, so this
+always produces a `git-multi-tool` binary in `$(go env GOBIN)` (or
+`$(go env GOPATH)/bin` if `GOBIN` isn't set). Make sure that directory is
+on your `PATH`.
+
+### Setting up the `gmt` shortcut
+
+The binary is intentionally installed under its full, unambiguous name.
+For the short `gmt` alias used throughout this README, symlink it once
+after installing (re-run this any time you reinstall/upgrade, since
+`go install` overwrites the target but not the symlink):
+
+```sh
+ln -sf "$(go env GOPATH)/bin/git-multi-tool" "$(go env GOPATH)/bin/gmt"
+```
+
+If your shell resolves commands via `GOBIN` instead, substitute
+`$(go env GOBIN)` above. Either way, `gmt` and `git-multi-tool` will then
+be the exact same binary, just two names for it, no wrapper scripts or
+shell functions required.
 
 ## Adding new commands
 
@@ -98,4 +181,6 @@ Each maintenance task lives as its own Cobra subcommand under `cmd/`,
 backed by an engine package under `internal/`. Look at `cmd/reauthor.go`
 and `internal/reauthor/reauthor.go` as the template: gather inputs with a
 `huh` form (skipped automatically for flags/non-interactive use), preview
-the blast radius, confirm, then execute.
+the blast radius, confirm, then execute. The actual `main` package lives
+in `cmd/git-multi-tool/`, so the built/installed binary is always named
+`git-multi-tool`.

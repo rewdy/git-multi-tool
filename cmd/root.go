@@ -56,6 +56,11 @@ func Execute() error {
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&repoDir, "repo", "C", "", "path to the git repository (defaults to the current directory)")
 	rootCmd.AddCommand(reauthorCmd)
+	rootCmd.AddCommand(nukeCmd)
+	rootCmd.AddCommand(syncCmd)
+	rootCmd.AddCommand(backToMainCmd)
+	rootCmd.AddCommand(pruneBranchesCmd)
+	rootCmd.AddCommand(restoreSnapshotCmd)
 	rootCmd.AddCommand(applyReauthorStepCmd)
 }
 
