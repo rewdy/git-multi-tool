@@ -1,5 +1,7 @@
 # ⚒ git-multi-tool (gmt)
 
+<p style="text-align:center"><img src="./assets/git-multi-tool-small.png" alt="git multi tool" /></p>
+
 A friendly forge for tidying up your git history.
 
 `git-multi-tool` is a growing toolbox of trivial-but-tedious git
@@ -49,17 +51,17 @@ gmt reauthor \
 
 Flags:
 
-| Flag | Description |
-| --- | --- |
+| Flag            | Description                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------------- |
 | `-n, --commits` | Which commits to touch: a single hash, a `hash..hash` range, or `-N` for the last N commits |
-| `--name` | New name to set (leave blank to keep each commit's existing name) |
-| `--email` | New email to set (leave blank to keep each commit's existing email) |
-| `--match-email` | Only rewrite commits whose *current* author email equals this |
-| `--match-name` | Only rewrite commits whose *current* author name equals this |
-| `--scope` | `author`, `committer`, or `both` (default) |
-| `--dry-run` | Show what would change without touching anything |
-| `-y, --yes` | Skip the confirmation prompt |
-| `-C, --repo` | Path to the git repo (defaults to the current directory) |
+| `--name`        | New name to set (leave blank to keep each commit's existing name)                           |
+| `--email`       | New email to set (leave blank to keep each commit's existing email)                         |
+| `--match-email` | Only rewrite commits whose _current_ author email equals this                               |
+| `--match-name`  | Only rewrite commits whose _current_ author name equals this                                |
+| `--scope`       | `author`, `committer`, or `both` (default)                                                  |
+| `--dry-run`     | Show what would change without touching anything                                            |
+| `-y, --yes`     | Skip the confirmation prompt                                                                |
+| `-C, --repo`    | Path to the git repo (defaults to the current directory)                                    |
 
 `reauthor` refuses to run with a dirty working tree, previews exactly
 which commits will change before doing anything, and only ever rewrites
@@ -133,11 +135,11 @@ rather than previewing branch names.
 
 Flags:
 
-| Flag | Description |
-| --- | --- |
-| `--force` | Delete with `-D`, even branches holding unmerged commits |
-| `--dry-run` | Fetch and report what would be deleted, without deleting |
-| `-y, --yes` | Skip the confirmation prompt |
+| Flag         | Description                                              |
+| ------------ | -------------------------------------------------------- |
+| `--force`    | Delete with `-D`, even branches holding unmerged commits |
+| `--dry-run`  | Fetch and report what would be deleted, without deleting |
+| `-y, --yes`  | Skip the confirmation prompt                             |
 | `-C, --repo` | Path to the git repo (defaults to the current directory) |
 
 Deletion uses `git branch -d`, never `-D`, so a branch whose remote is

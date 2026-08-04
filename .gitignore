@@ -2,3 +2,5 @@
 /git-multi-tool
 /dist/
 *.test
+
+.DS_Store
