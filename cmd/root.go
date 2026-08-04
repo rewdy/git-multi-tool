@@ -60,6 +60,7 @@ func init() {
 	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(backToMainCmd)
 	rootCmd.AddCommand(pruneBranchesCmd)
+	rootCmd.AddCommand(pruneGoneCmd)
 	rootCmd.AddCommand(restoreSnapshotCmd)
 	rootCmd.AddCommand(applyReauthorStepCmd)
 }

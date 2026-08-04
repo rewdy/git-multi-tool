@@ -118,6 +118,36 @@ from the list, so you can't accidentally delete either. Pass `--all` to
 delete every eligible branch without the picker (still asks for
 confirmation unless you also pass `-y/--yes`).
 
+### `prune-gone`
+
+```sh
+gmt prune-gone
+```
+
+Local branch maintenance for after everyone else's merges land. Runs
+`git fetch --prune` to drop remote-tracking refs that no longer exist
+upstream, then deletes the local branches that were tracking them, the
+ones `git branch -vv` marks `[gone]`. Since that list only exists after
+the prune, the confirmation prompt comes first and spells out both steps
+rather than previewing branch names.
+
+Flags:
+
+| Flag | Description |
+| --- | --- |
+| `--force` | Delete with `-D`, even branches holding unmerged commits |
+| `--dry-run` | Fetch and report what would be deleted, without deleting |
+| `-y, --yes` | Skip the confirmation prompt |
+| `-C, --repo` | Path to the git repo (defaults to the current directory) |
+
+Deletion uses `git branch -d`, never `-D`, so a branch whose remote is
+gone but which still holds unmerged commits is refused by git and
+reported instead of thrown away, which matters because a deleted
+upstream doesn't guarantee the work got merged. `--force` overrides that
+once you've read the list. The branch you're standing on is left alone
+even when its upstream is gone, and branches you never pushed are never
+candidates at all, only a branch that had an upstream can have lost one.
+
 ### `restore-snapshot`
 
 ```sh

@@ -282,6 +282,60 @@ func DeleteBranch(dir, name string) error {
 	return err
 }
 
+// DeleteBranchIfMerged deletes a local branch with `git branch -d`, which
+// refuses when the branch holds commits that aren't merged anywhere else.
+// That refusal is the point: a branch whose remote vanished may still be
+// the only copy of unpushed work, so callers surface the error rather than
+// reaching for -D.
+func DeleteBranchIfMerged(dir, name string) error {
+	_, err := Run(dir, "branch", "-d", name)
+	return err
+}
+
+// GoneBranch is a local branch whose upstream has disappeared, which is
+// what's left behind after the remote branch is deleted (typically when a
+// merge request merges).
+type GoneBranch struct {
+	Name     string // local branch name
+	Upstream string // the tracking ref that no longer exists
+}
+
+// FetchPrune fetches and deletes remote-tracking refs whose upstream
+// branches are gone, which is what makes GoneBranches able to see them.
+// Streams git's own output, since this hits the network.
+func FetchPrune(dir string) error {
+	return RunInteractive(dir, nil, "fetch", "--prune")
+}
+
+// GoneBranches lists local branches whose upstream ref is gone. It asks
+// for-each-ref for the same "[gone]" marker `git branch -vv` prints, but
+// against a machine-readable format, so branch names containing spaces or
+// upstreams named like the marker can't confuse the parse.
+//
+// Only branches that actually had an upstream can be gone, so branches
+// that were never pushed are absent here rather than silently swept up.
+func GoneBranches(dir string) ([]GoneBranch, error) {
+	const sep = "\x1f"
+	out, err := Run(dir, "for-each-ref",
+		"--format=%(refname:short)"+sep+"%(upstream:short)"+sep+"%(upstream:track)",
+		"refs/heads/")
+	if err != nil {
+		return nil, err
+	}
+	if out == "" {
+		return nil, nil
+	}
+	var gone []GoneBranch
+	for line := range strings.SplitSeq(out, "\n") {
+		fields := strings.Split(line, sep)
+		if len(fields) != 3 || fields[2] != "[gone]" {
+			continue
+		}
+		gone = append(gone, GoneBranch{Name: fields[0], Upstream: fields[1]})
+	}
+	return gone, nil
+}
+
 // StashPush stashes staged and unstaged changes (not untracked files)
 // under the given message.
 func StashPush(dir, message string) error {
