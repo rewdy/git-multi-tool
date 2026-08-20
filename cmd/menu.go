@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -34,34 +35,31 @@ func runMenu(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	options := make([]huh.Option[string], 0, len(available)+1)
+	options := make([]huh.Option[string], 0, len(available))
 	for _, sub := range available {
 		options = append(options, huh.NewOption(sub.Name()+" — "+sub.Short, sub.Name()))
 	}
-	options = append(options, huh.NewOption("Nah, just exit", ""))
 
 	var pick string
 	err := huh.NewSelect[string]().
-		Title("Peek at a command's details?").
+		Title("Which command do you want to run?").
+		Description("↑/↓ or j/k to move, enter to run, esc/q to quit").
 		Options(options...).
 		Value(&pick).
 		WithTheme(style.Theme()).
 		Run()
 	if err != nil {
+		if errors.Is(err, huh.ErrUserAborted) {
+			fmt.Println(style.Muted.Render("Suit yourself."))
+			return nil
+		}
 		return err
 	}
-	if pick == "" {
-		fmt.Println(style.Muted.Render("Suit yourself."))
-		return nil
-	}
 
-	for _, sub := range available {
-		if sub.Name() == pick {
-			fmt.Println()
-			return sub.Help()
-		}
-	}
-	return nil
+	root := cmd.Root()
+	root.SetArgs([]string{pick})
+	fmt.Println()
+	return root.Execute()
 }
 
 // availableCommands returns every non-hidden, user-facing subcommand of
