@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE:          runMenu,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if cmd.Name() == "__apply-reauthor-step" || cmd.Name() == rootUse {
+		if cmd.Name() == "__apply-reauthor-step" || cmd.Name() == rootUse || cmd.Name() == "install-aliases" {
 			return nil
 		}
 		if !gitutil.IsRepo(repoDir) {
@@ -62,6 +62,7 @@ func init() {
 	rootCmd.AddCommand(pruneBranchesCmd)
 	rootCmd.AddCommand(pruneGoneCmd)
 	rootCmd.AddCommand(restoreSnapshotCmd)
+	rootCmd.AddCommand(installAliasesCmd)
 	rootCmd.AddCommand(applyReauthorStepCmd)
 }
 

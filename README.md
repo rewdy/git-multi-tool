@@ -165,6 +165,46 @@ preview and validates the patch applies cleanly (`git apply --check`)
 before touching anything; if your working tree is dirty it offers to
 stash first as a safety net. Supports `--dry-run`.
 
+### `install-aliases`
+
+```sh
+gmt install-aliases
+```
+
+Wires the short command mnemonics up as real shell aliases so you can
+type `gbm` instead of `git-multi-tool back-to-main`. Run it in a terminal
+to multi-select which aliases to add (everything's pre-selected; `ctrl+a`
+toggles all, `space` toggles one), or pass `--all` / `--alias` for
+scripted, non-interactive setup. It targets bash and zsh, autodetecting
+from `$SHELL`, and writes the chosen aliases into a managed block in your
+`~/.zshrc` or `~/.bashrc`, so re-running updates them in place instead of
+piling up duplicates. Unlike the other commands, it doesn't need to run
+inside a git repo.
+
+The curated aliases:
+
+| Alias  | Runs               |
+| ------ | ------------------ |
+| `gbm`  | `back-to-main`     |
+| `gfr`  | `sync`             |
+| `boom` | `nuke`             |
+| `ggp`  | `prune-gone`       |
+| `gpb`  | `prune-branches`   |
+| `gra`  | `reauthor`         |
+| `grs`  | `restore-snapshot` |
+
+Flags:
+
+| Flag           | Description                                                        |
+| -------------- | ------------------------------------------------------------------ |
+| `--all`        | Install every alias without prompting                              |
+| `--alias name` | Install specific alias(es); repeatable, e.g. `--alias gbm --alias boom` |
+| `--shell`      | Target shell, `bash` or `zsh` (defaults to autodetecting `$SHELL`) |
+| `--rc`         | Startup file to write (defaults to the shell's `~/.zshrc`/`~/.bashrc`) |
+| `--bin`        | Binary name the aliases invoke (defaults to this executable's name) |
+| `--dry-run`    | Show what would be written without touching any files              |
+| `-y, --yes`    | Skip the confirmation prompt                                       |
+
 ## Building
 
 ```sh
