@@ -61,8 +61,8 @@ func runNuke(cmd *cobra.Command, args []string) error {
 		err := huh.NewConfirm().
 			Title("Really blow it all away?").
 			Description("Tracked changes are reset and untracked files/dirs are deleted. No undo.").
-			Affirmative("BOOM 💥").
-			Negative("Not yet").
+			Affirmative("BOOM 💥 [y]").
+			Negative("Not yet [n]").
 			Value(&confirmed).
 			WithTheme(style.Theme()).
 			Run()

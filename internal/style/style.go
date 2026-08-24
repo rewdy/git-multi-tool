@@ -5,6 +5,7 @@ package style
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -54,11 +55,58 @@ var (
 )
 
 // Logo returns the git-multi-tool wordmark banner used at the top of interactive
-// flows.
+// flows. Its background is a per-cell gradient sweeping from indigo on the left
+// to fuchsia on the right, so the banner reads as a single smooth wash of color.
 func Logo() string {
-	logo := Banner.Render(" ⚒ gmt ")
-	tag := Tagline.Render("forging tidy git history, one hammer swing at a time")
-	return logo + "\n" + tag
+	logo := gradientBanner("   ⚒ gmt   ")
+	tag := Tagline.Render(taglines[rand.Intn(len(taglines))])
+	return "\n" + logo + "\n" + tag
+}
+
+// taglines are the rotating, cheeky subtitles printed under the banner. One is
+// picked at random each time the logo renders.
+var taglines = []string{
+	"forging tidy git history, one hammer swing at a time",
+	"rebasing reality since your last regret",
+	"because `git reflog` shouldn't be your therapist",
+	"commit crimes, we'll help you cover them up",
+	"turning `oh no` into `oh yes` since HEAD~1",
+	"detached HEAD? we prefer 'free-spirited'",
+	"squashing bugs and commits with equal glee",
+	"force-pushing your problems away, responsibly",
+	"your branch is 3 commits behind good decisions",
+	"amending your ways, one commit at a time",
+}
+
+// gradientBanner renders text with a purple-to-pink background gradient, one
+// interpolated background color per character cell, keeping the cream bold
+// foreground of the original banner.
+func gradientBanner(text string) string {
+	runes := []rune(text)
+	n := len(runes)
+	from := [3]int{0x75, 0x71, 0xF9} // indigo
+	to := [3]int{0xF7, 0x80, 0xE2}   // fuchsia
+
+	var b strings.Builder
+	for i, r := range runes {
+		t := 0.0
+		if n > 1 {
+			t = float64(i) / float64(n-1)
+		}
+		bg := lipgloss.Color(fmt.Sprintf("#%02X%02X%02X",
+			lerp(from[0], to[0], t),
+			lerp(from[1], to[1], t),
+			lerp(from[2], to[2], t),
+		))
+		cell := lipgloss.NewStyle().Bold(true).Foreground(Cream).Background(bg)
+		b.WriteString(cell.Render(string(r)))
+	}
+	return b.String()
+}
+
+// lerp linearly interpolates between two 0-255 channel values at position t.
+func lerp(a, b int, t float64) int {
+	return int(float64(a) + (float64(b)-float64(a))*t + 0.5)
 }
 
 // Heading renders a section heading with a little lightning bolt bullet,

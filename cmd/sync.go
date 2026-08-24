@@ -67,8 +67,8 @@ func runSync(cmd *cobra.Command, args []string) error {
 			err := huh.NewConfirm().
 				Title("You've got uncommitted changes. Stash them for the rebase?").
 				Description("They'll be popped back once the rebase finishes.").
-				Affirmative("Stash 'em").
-				Negative("Leave them (may block the rebase)").
+				Affirmative("Stash 'em [y]").
+				Negative("Leave them (may block the rebase) [n]").
 				Value(&wantStash).
 				WithTheme(style.Theme()).
 				Run()

@@ -98,8 +98,8 @@ func runInstallAliases(cmd *cobra.Command, args []string) error {
 		confirmed := false
 		err := huh.NewConfirm().
 			Title(fmt.Sprintf("Write these aliases into %s?", rcPath)).
-			Affirmative("Do it").
-			Negative("Not yet").
+			Affirmative("Do it [y]").
+			Negative("Not yet [n]").
 			Value(&confirmed).
 			WithTheme(style.Theme()).
 			Run()

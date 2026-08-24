@@ -110,8 +110,8 @@ func runRestoreSnapshot(cmd *cobra.Command, args []string) error {
 			err := huh.NewConfirm().
 				Title("You've got uncommitted changes. Stash them first as a safety net?").
 				Description("They'll still be there afterward via `git stash pop`, this doesn't touch them, just protects them.").
-				Affirmative("Stash 'em").
-				Negative("Leave them be").
+				Affirmative("Stash 'em [y]").
+				Negative("Leave them be [n]").
 				Value(&wantStash).
 				WithTheme(style.Theme()).
 				Run()
@@ -130,8 +130,8 @@ func runRestoreSnapshot(cmd *cobra.Command, args []string) error {
 		err := huh.NewConfirm().
 			Title(fmt.Sprintf("Restore working tree to match %s?", style.ShortHash(rev))).
 			Description("This only changes tracked file contents in your working tree, no commits are made or moved.").
-			Affirmative("Restore it").
-			Negative("Not yet").
+			Affirmative("Restore it [y]").
+			Negative("Not yet [n]").
 			Value(&confirmed).
 			WithTheme(style.Theme()).
 			Run()

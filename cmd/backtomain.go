@@ -124,8 +124,8 @@ func runBackToMain(cmd *cobra.Command, args []string) error {
 		confirmed := false
 		err := huh.NewConfirm().
 			Title(fmt.Sprintf("Switch to %s and delete %q?", main, current)).
-			Affirmative("Let's go").
-			Negative("Not yet").
+			Affirmative("Let's go [y]").
+			Negative("Not yet [n]").
 			Value(&confirmed).
 			WithTheme(style.Theme()).
 			Run()

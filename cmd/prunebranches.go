@@ -107,8 +107,8 @@ func runPruneBranches(cmd *cobra.Command, args []string) error {
 		confirmed := false
 		err := huh.NewConfirm().
 			Title("Delete these branches?").
-			Affirmative("Delete 'em").
-			Negative("Not yet").
+			Affirmative("Delete 'em [y]").
+			Negative("Not yet [n]").
 			Value(&confirmed).
 			WithTheme(style.Theme()).
 			Run()

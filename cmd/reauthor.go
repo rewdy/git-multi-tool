@@ -152,8 +152,8 @@ func runReauthor(cmd *cobra.Command, args []string) error {
 		err := huh.NewConfirm().
 			Title("Ready to swing the hammer?").
 			Description("This rewrites commits in place via a git rebase.").
-			Affirmative("Let's forge it ⚒").
-			Negative("Not yet").
+			Affirmative("Let's forge it ⚒ [y]").
+			Negative("Not yet [n]").
 			Value(&confirmed).
 			WithTheme(style.Theme()).
 			Run()
@@ -240,8 +240,8 @@ func gatherReauthorInputs(cmd *cobra.Command) error {
 			huh.NewConfirm().
 				Title("Only rewrite commits matching a specific current email?").
 				Description("Say no to rewrite every commit in the range, no questions asked.").
-				Affirmative("Filter it").
-				Negative("Rewrite all").
+				Affirmative("Filter it [y]").
+				Negative("Rewrite all [n]").
 				Value(&reauthorFlags.filterByOld),
 		))
 		groups = append(groups, huh.NewGroup(

@@ -73,8 +73,8 @@ func runPruneGone(cmd *cobra.Command, args []string) error {
 		if err := huh.NewConfirm().
 			Title("Go ahead and tidy up?").
 			Description("gmt will list what it found before deleting anything.").
-			Affirmative("Tidy up").
-			Negative("Not yet").
+			Affirmative("Tidy up [y]").
+			Negative("Not yet [n]").
 			Value(&confirmed).
 			WithTheme(style.Theme()).
 			Run(); err != nil {
