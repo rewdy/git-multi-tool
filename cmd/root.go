@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 	SilenceErrors: true,
 	RunE:          runMenu,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if cmd.Name() == "__apply-reauthor-step" || cmd.Name() == rootUse || cmd.Name() == "install-aliases" {
+		if cmd.Name() == "__apply-reauthor-step" || cmd.Name() == rootUse || cmd.Name() == "install-aliases" || cmd.Name() == "clone" {
 			return nil
 		}
 		if !gitutil.IsRepo(repoDir) {
@@ -55,6 +55,8 @@ func Execute() error {
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&repoDir, "repo", "C", "", "path to the git repository (defaults to the current directory)")
+	rootCmd.AddCommand(cloneCmd)
+	rootCmd.AddCommand(publishCmd)
 	rootCmd.AddCommand(reauthorCmd)
 	rootCmd.AddCommand(nukeCmd)
 	rootCmd.AddCommand(syncCmd)

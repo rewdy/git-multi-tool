@@ -34,10 +34,16 @@ const (
 
 // Alias is one shell shortcut: a short mnemonic (Name) that expands to a
 // git-multi-tool subcommand (Subcommand), with a human summary for previews.
+//
+// Func marks the shortcuts that have to be shell *functions* rather than
+// aliases, because they change the calling shell's state. A child process
+// can't cd its parent, so `clone` prints where it landed and the function
+// does the cd — see Line.
 type Alias struct {
 	Name       string
 	Subcommand string
 	Summary    string
+	Func       bool
 }
 
 // Catalog is the curated set of shortcuts we offer: one memorable alias per
@@ -45,6 +51,7 @@ type Alias struct {
 // (gbm, gfr, boom, ggp) are kept identical so muscle memory carries over.
 func Catalog() []Alias {
 	return []Alias{
+		{Name: "gcd", Subcommand: "clone", Summary: "clone a repo and cd into it", Func: true},
 		{Name: "gbm", Subcommand: "back-to-main", Summary: "hop back to the default branch and delete the one you're leaving"},
 		{Name: "gfr", Subcommand: "sync", Summary: "fetch and rebase your current branch onto the default branch"},
 		{Name: "boom", Subcommand: "nuke", Summary: "blow away all uncommitted changes, tracked and untracked"},
@@ -109,9 +116,18 @@ func RCPath(sh Shell) (string, error) {
 	}
 }
 
-// Line renders a single alias definition, e.g. alias gbm='git-multi-tool
+// Line renders a single shortcut definition, e.g. alias gbm='git-multi-tool
 // back-to-main'. bash and zsh share this syntax exactly.
+//
+// Func shortcuts render as a one-line function instead: it captures the path
+// the subcommand prints on stdout and cds there, bailing out (without cd-ing)
+// when the command fails or prints nothing, which is how a cancelled or
+// dry-run invocation leaves you where you were.
 func Line(a Alias, bin string) string {
+	if a.Func {
+		return fmt.Sprintf(`%s() { local __gmt_dir; __gmt_dir="$(%s %s "$@")" || return $?; if [ -n "$__gmt_dir" ]; then cd -- "$__gmt_dir"; fi; }`,
+			a.Name, bin, a.Subcommand)
+	}
 	return fmt.Sprintf("alias %s='%s %s'", a.Name, bin, a.Subcommand)
 }
 

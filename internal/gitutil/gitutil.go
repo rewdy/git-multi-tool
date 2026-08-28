@@ -50,6 +50,20 @@ func RunInteractive(dir string, env []string, args ...string) error {
 	return cmd.Run()
 }
 
+// Clone clones url into dir, forwarding extra flags to git and streaming
+// git's own progress. Unlike RunInteractive it points git's stdout at
+// *stderr*, because the clone command keeps its own stdout reserved for the
+// resulting path so a shell wrapper can cd into it.
+func Clone(url, dir string, extra ...string) error {
+	args := append([]string{"clone"}, extra...)
+	args = append(args, url, dir)
+	cmd := exec.Command("git", args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stderr
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 // IsRepo reports whether dir (or cwd) is inside a git working tree.
 func IsRepo(dir string) bool {
 	out, err := Run(dir, "rev-parse", "--is-inside-work-tree")
@@ -68,6 +82,51 @@ func CurrentBranch(dir string) (string, error) {
 		return "", nil
 	}
 	return out, nil
+}
+
+// RemoteURL returns the configured URL for a remote (e.g. "origin"), or ""
+// if that remote has no URL configured. Like the several helpers that
+// swallow git's non-zero exit, an unconfigured remote isn't an error here:
+// the empty answer is what the caller acts on.
+func RemoteURL(dir, remote string) (string, error) {
+	out, err := Run(dir, "config", "--get", "remote."+remote+".url")
+	if err != nil {
+		return "", nil
+	}
+	return out, nil
+}
+
+// LatestCommitSubject returns the subject line (first line) of the newest
+// commit reachable from HEAD, or "" if there are no commits yet.
+func LatestCommitSubject(dir string) (string, error) {
+	out, err := Run(dir, "log", "-1", "--format=%s")
+	if err != nil {
+		return "", nil
+	}
+	return out, nil
+}
+
+// LatestCommitBody returns the body (everything after the subject line) of
+// the newest commit reachable from HEAD, or "" if it has none.
+func LatestCommitBody(dir string) (string, error) {
+	out, err := Run(dir, "log", "-1", "--format=%b")
+	if err != nil {
+		return "", nil
+	}
+	return out, nil
+}
+
+// Push pushes branch to origin, setting upstream (-u), and forwards any
+// push options as `-o <opt>` flags. Push options are how GitLab drives
+// server-side actions like opening a merge request. It streams git's own
+// output, since this hits the network.
+func Push(dir, branch string, options ...string) error {
+	args := []string{"push", "-u"}
+	for _, opt := range options {
+		args = append(args, "-o", opt)
+	}
+	args = append(args, "origin", branch)
+	return RunInteractive(dir, nil, args...)
 }
 
 // HasUncommittedChanges reports whether the working tree has staged or

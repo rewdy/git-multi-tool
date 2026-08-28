@@ -66,6 +66,26 @@ Two things worth knowing before touching this: git already refuses to clobber un
 
 `git submodule status` has no `--porcelain`; `SubmoduleStatus` parses its documented `-`/`+`/`U` prefixes. Note `Run` trims the whole output, so the first line loses its leading space while later ones keep theirs — the parser normalizes both.
 
+### The clone-and-cd contract
+
+`clone` is the one command that inverts the output rules: a child process can't
+change its parent shell's directory, so `cmd/clone.go` prints the destination
+path — and nothing else — on **stdout**, and routes every human-facing byte
+(logo, preview, git's progress) to **stderr** via an explicit `out := os.Stderr`.
+`gitutil.Clone` exists rather than reusing `RunInteractive` for exactly this
+reason: it points git's stdout at stderr too. Don't "fix" a `fmt.Fprintln(out, …)`
+in that file into a `fmt.Println`; it would end up in the shell's `$(…)` capture.
+
+The shell side is `shellsetup.Alias.Func`, which renders a one-line function
+instead of an `alias` (`Line` branches on it). It cds only when the command
+succeeded *and* printed something, so cancelling or `--dry-run` leaves you put.
+
+Two related consequences: `clone` is exempt from `PersistentPreRunE`'s repo
+check (there's no repo yet, and `-C/--repo` means "parent directory to clone
+into" here), and it can't use `isInteractive()` for prompting — stdout is a pipe
+under the wrapper. It has its own `promptable()`, checking stdin+stderr, which
+works because huh renders to stderr by default.
+
 ### The reauthor rewrite mechanism
 
 This is the one genuinely non-obvious piece. To change identities while preserving dates, messages, and content, `reauthor.Plan.Run`:

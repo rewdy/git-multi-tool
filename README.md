@@ -26,6 +26,39 @@ right there; piped/non-interactive sessions just get the list.
 gmt
 ```
 
+### `clone`
+
+```sh
+gcd git@github.com:owner/repo.git      # clone, then land inside it
+gmt clone git@github.com:owner/repo.git
+```
+
+Clones a repo and drops you into it. A process can't change its parent
+shell's directory, so `clone` prints the directory it landed in on
+**stdout** and the `gcd` shell function (from `install-aliases`) does the
+`cd`. Everything else, the banner, the preview, git's own progress, goes
+to stderr, which keeps stdout a clean path you can capture yourself:
+
+```sh
+cd "$(gmt clone git@github.com:owner/repo.git)"
+```
+
+Run it without a URL in a terminal and it'll ask for one. Unlike the other
+commands it doesn't need to run inside a git repo; if you pass
+`-C/--repo`, that's used as the parent directory to clone into. Cloning a
+repo you already have in the target directory doesn't re-clone, it just
+prints the path so `gcd` still puts you there.
+
+Flags:
+
+| Flag           | Description                                                       |
+| -------------- | ----------------------------------------------------------------- |
+| `--dir`        | Directory to clone into (defaults to the repo name from the URL)  |
+| `-b, --branch` | Check out this branch instead of the remote's default             |
+| `--depth`      | Shallow clone with this many commits of history                   |
+| `--dry-run`    | Show where it would clone to without cloning                      |
+| `-C, --repo`   | Parent directory to clone into (defaults to the current directory) |
+
 ### `reauthor`
 
 Rewrite the author and/or committer name/email across a run of commits,
@@ -94,6 +127,42 @@ Pass `--stash` to automatically stash uncommitted changes before
 rebasing and pop them back afterward; without it you'll be prompted
 interactively if you have any. If the rebase conflicts, it leaves the
 repo mid-rebase with git's usual `--abort`/`--continue` escape hatches.
+
+### `publish`
+
+```sh
+gmt publish                 # push the current branch, set its upstream
+gmt publish -c              # ...and open a GitLab merge request too
+```
+
+Pushes the current branch to `origin` and sets its upstream, the
+`git push -u origin HEAD` you type a hundred times a day. With
+`-c/--create-mr` it also opens a **GitLab** merge request in the same
+push, using git push options (`merge_request.create` and friends), and
+prompts for the title and description first, prefilled from your latest
+commit's subject and body (matching how GitLab fills a single-commit
+MR). The multi-select also exposes draft, remove-source-branch, and
+merge-when-pipeline-succeeds.
+
+Merge-request creation is GitLab-only. GitHub has no push option for
+pull requests, so `-c` against a GitHub remote fails fast and points you
+at `gh pr create`; a plain `gmt publish` still works everywhere. Like
+the other mutating commands it previews first and confirms (`-y/--yes`
+to skip, `--dry-run` to stop after the preview).
+
+Flags:
+
+| Flag                             | Description                                                     |
+| -------------------------------- | --------------------------------------------------------------- |
+| `-c, --create-mr`                | Open a GitLab merge request as part of the push                 |
+| `-t, --target`                   | Merge request target branch (defaults to the default branch)    |
+| `--title`                        | Merge request title (defaults to your latest commit subject)    |
+| `-d, --description`              | Merge request description (defaults to your latest commit body) |
+| `--draft`                        | Mark the merge request as a draft                               |
+| `--remove-source-branch`         | Delete the source branch once the merge request merges          |
+| `--merge-when-pipeline-succeeds` | Auto-merge the request once its pipeline passes                 |
+| `-y, --yes`                      | Skip the confirmation prompt                                    |
+| `--dry-run`                      | Show what would be pushed without pushing                       |
 
 ### `back-to-main`
 
@@ -185,6 +254,7 @@ The curated aliases:
 
 | Alias  | Runs               |
 | ------ | ------------------ |
+| `gcd`  | `clone`            |
 | `gbm`  | `back-to-main`     |
 | `gfr`  | `sync`             |
 | `boom` | `nuke`             |
@@ -192,6 +262,10 @@ The curated aliases:
 | `gpb`  | `prune-branches`   |
 | `gra`  | `reauthor`         |
 | `grs`  | `restore-snapshot` |
+
+`gcd` is written as a shell function rather than an alias, because it has
+to `cd` your current shell after the clone finishes; the rest are plain
+one-line aliases.
 
 Flags:
 
