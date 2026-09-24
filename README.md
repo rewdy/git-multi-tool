@@ -285,25 +285,43 @@ Flags:
 go build ./cmd/git-multi-tool
 ```
 
-To bake in a real version (shown by `git-multi-tool --version`), pass it
-via ldflags:
+`git-multi-tool --version` reports whatever version Go resolved for the
+build. A clone built with the command above reports the commit it was
+built from (with a `+dirty` suffix if the working tree has changes), and
+`go install …@v1.2.3` reports `v1.2.3`, so installed copies identify
+themselves correctly with no extra flags.
+
+Release binaries built outside a git checkout have no such information,
+so those builds override it explicitly:
 
 ```sh
-go build -ldflags "-X git-multi-tool/cmd.version=v1.2.3" ./cmd/git-multi-tool
+go build -ldflags "-X github.com/rewdy/git-multi-tool/cmd.version=v1.2.3" ./cmd/git-multi-tool
 ```
 
-Without that flag, `--version` reports `dev`.
+An explicitly passed version always wins over the one Go discovered. If
+neither is available, `--version` reports `dev`.
 
 ## Installing
+
+```sh
+go install github.com/rewdy/git-multi-tool/cmd/git-multi-tool@latest
+```
+
+That fetches the latest published version straight from GitHub, so no
+checkout is needed. To install the copy you're working on instead, run
+this from the repo root:
 
 ```sh
 go install ./cmd/git-multi-tool
 ```
 
-Go names the installed binary after its package directory, so this
-always produces a `git-multi-tool` binary in `$(go env GOBIN)` (or
+Either way Go names the installed binary after its package directory, so
+you always get a `git-multi-tool` binary in `$(go env GOBIN)` (or
 `$(go env GOPATH)/bin` if `GOBIN` isn't set). Make sure that directory is
 on your `PATH`.
+
+Tool managers that shell out to `go install` work against the same path,
+e.g. `mise use --global go:github.com/rewdy/git-multi-tool/cmd/git-multi-tool@latest`.
 
 ### Setting up the `gmt` shortcut
 

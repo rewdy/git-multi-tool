@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git-multi-tool/internal/gitutil"
+	"github.com/rewdy/git-multi-tool/internal/gitutil"
 )
 
 // Plan is a resolved clone: which repo, which directory it lands in, and the

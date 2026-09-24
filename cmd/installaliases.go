@@ -9,8 +9,8 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
-	"git-multi-tool/internal/shellsetup"
-	"git-multi-tool/internal/style"
+	"github.com/rewdy/git-multi-tool/internal/shellsetup"
+	"github.com/rewdy/git-multi-tool/internal/style"
 )
 
 var installAliasesFlags struct {

@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss/list"
 	"github.com/spf13/cobra"
 
-	"git-multi-tool/internal/style"
+	"github.com/rewdy/git-multi-tool/internal/style"
 )
 
 // runMenu is what happens when gmt is invoked with no subcommand: instead

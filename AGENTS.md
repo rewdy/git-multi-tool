@@ -13,8 +13,9 @@ go build ./cmd/git-multi-tool          # build -> ./git-multi-tool (gitignored)
 go vet ./...
 go install ./cmd/git-multi-tool        # installs as `git-multi-tool` into $GOBIN
 
-# bake in a version (otherwise --version reports "dev")
-go build -ldflags "-X git-multi-tool/cmd.version=v1.2.3" ./cmd/git-multi-tool
+# override the version --version reports (defaults to the commit for a clone,
+# or to the module version when installed with `go install ...@v1.2.3`)
+go build -ldflags "-X github.com/rewdy/git-multi-tool/cmd.version=v1.2.3" ./cmd/git-multi-tool
 ```
 
 There are no tests in the repo yet. Once added: `go test ./...`, single test via `go test ./internal/gitutil -run TestParseSpec`.
@@ -26,7 +27,7 @@ There are no tests in the repo yet. Once added: `go test ./...`, single test via
 Three layers, strictly separated:
 
 - **`cmd/git-multi-tool/main.go`** — the only `main`; calls `cmd.Execute()` and turns errors into exit code 1. It prints the error itself, which is why `rootCmd` sets `SilenceErrors`/`SilenceUsage`.
-- **`cmd/`** (package `cmd`) — one file per subcommand, holding the Cobra definition, its flag struct, the `huh` prompts, the preview rendering, and the confirmation gate. This layer owns all user interaction.
+- **`cmd/`** (package `cmd`) — one file per subcommand, holding the Cobra definition, its flag struct, the `huh` prompts, the preview rendering, and the confirmation gate. This layer owns all user interaction. `version.go` is the one piece that isn't a subcommand: it reports the version baked in by ldflags, falling back to the module version Go records in the binary so `go install` copies don't call themselves "dev".
 - **`internal/`** — engines with no UI. `gitutil` is the only thing that shells out to git; `reauthor` is the history-rewrite engine; `submodule` is the submodule-refresh engine; `style` owns the palette, `huh` theme, and line renderers.
 
 `cmd/root.go` is the wiring point: every subcommand must be added there in `init()`. The persistent `-C/--repo` flag lands in the package-level `repoDir`, which every command passes as the first arg to `gitutil`/engine functions — there is no config struct. `PersistentPreRunE` validates that `repoDir` is a git repo, exempting the root command (so the bare menu still works outside a repo) and the hidden `__apply-reauthor-step`.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"git-multi-tool/cmd"
+	"github.com/rewdy/git-multi-tool/cmd"
 )
 
 func main() {

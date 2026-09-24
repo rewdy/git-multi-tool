@@ -8,9 +8,9 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 
-	"git-multi-tool/internal/gitutil"
-	"git-multi-tool/internal/publish"
-	"git-multi-tool/internal/style"
+	"github.com/rewdy/git-multi-tool/internal/gitutil"
+	"github.com/rewdy/git-multi-tool/internal/publish"
+	"github.com/rewdy/git-multi-tool/internal/style"
 )
 
 var publishFlags struct {

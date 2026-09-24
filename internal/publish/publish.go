@@ -11,7 +11,7 @@ package publish
 import (
 	"strings"
 
-	"git-multi-tool/internal/gitutil"
+	"github.com/rewdy/git-multi-tool/internal/gitutil"
 )
 
 // Host is which forge a remote points at, as far as we can tell from its

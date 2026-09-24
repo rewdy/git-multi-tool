@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"git-multi-tool/internal/gitutil"
+	"github.com/rewdy/git-multi-tool/internal/gitutil"
 )
 
 // StepEnv is the name of the environment variable git-multi-tool uses to

@@ -1,4 +1,4 @@
-module git-multi-tool
+module github.com/rewdy/git-multi-tool
 
 go 1.24.13
 
