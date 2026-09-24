@@ -20,6 +20,8 @@ go build -ldflags "-X github.com/rewdy/git-multi-tool/cmd.version=v1.2.3" ./cmd/
 
 There are no tests in the repo yet. Once added: `go test ./...`, single test via `go test ./internal/gitutil -run TestParseSpec`.
 
+Releases are annotated git tags on `main` — pushing one publishes the module, nothing else. Steps are in README's "Releasing" section; never move a tag that's been pushed.
+
 `gmt` is only ever a symlink to the installed binary (see README) — the module has one `main` package, in `cmd/git-multi-tool/`.
 
 ## Architecture

@@ -339,6 +339,43 @@ If your shell resolves commands via `GOBIN` instead, substitute
 be the exact same binary, just two names for it, no wrapper scripts or
 shell functions required.
 
+## Releasing
+
+There's no build or publish step: a pushed git tag *is* the release.
+`proxy.golang.org` picks tags up on demand, so the moment one is pushed,
+`go install …@v0.2.0` and `@latest` work for everyone. Tag only a commit
+that's on `main` and already green:
+
+```sh
+git switch main && git pull
+git tag -a v0.2.0 -m "v0.2.0"
+git push origin v0.2.0
+```
+
+Then confirm the version is live and that the binary reports it:
+
+```sh
+go list -m github.com/rewdy/git-multi-tool@latest
+go install github.com/rewdy/git-multi-tool/cmd/git-multi-tool@latest
+git-multi-tool --version    # should print v0.2.0
+```
+
+Two rules worth respecting:
+
+- **Never move or reuse a tag.** Published versions are cached
+  immutably, so a re-push changes nothing for anyone who already
+  resolved it. Ship the fix as the next patch instead, or declare
+  `retract v0.2.0` in `go.mod` to mark the bad one as unusable.
+- **The major version lives in the module path.** A v2 line needs
+  `module github.com/rewdy/git-multi-tool/v2` (and `v2.0.0`-style tags),
+  which is a breaking import change, not just a number. Until v1.0.0,
+  minor bumps may contain breaking changes.
+
+If you'd rather people without a Go toolchain could install it too, add a
+workflow triggered by `on: push: tags: 'v*'` that runs
+[goreleaser](https://goreleaser.com) to attach prebuilt binaries to a
+GitHub Release. The tag alone is still what `go install` uses.
+
 ## Adding new commands
 
 Each maintenance task lives as its own Cobra subcommand under `cmd/`,
