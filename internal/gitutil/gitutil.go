@@ -335,6 +335,42 @@ func LocalBranches(dir string) ([]string, error) {
 	return strings.Split(out, "\n"), nil
 }
 
+// RecentBranch is a local branch plus a summary of its tip commit.
+type RecentBranch struct {
+	Name     string
+	Date     string // tip commit's committer date, local time
+	Relative string // same date, humanized ("3 days ago")
+	Subject  string
+}
+
+// RecentBranches lists up to limit local branches, most recently committed
+// first. Committer date is used rather than author date so a rebased
+// branch counts as fresh. A limit of 0 or less means no limit.
+func RecentBranches(dir string, limit int) ([]RecentBranch, error) {
+	const sep = "\x1f"
+	args := []string{"for-each-ref", "--sort=-committerdate",
+		"--format=%(refname:short)" + sep + "%(committerdate:format-local:%Y-%m-%d %H:%M)" + sep + "%(committerdate:relative)" + sep + "%(contents:subject)"}
+	if limit > 0 {
+		args = append(args, fmt.Sprintf("--count=%d", limit))
+	}
+	out, err := Run(dir, append(args, "refs/heads/")...)
+	if err != nil {
+		return nil, err
+	}
+	if out == "" {
+		return nil, nil
+	}
+	var branches []RecentBranch
+	for line := range strings.SplitSeq(out, "\n") {
+		fields := strings.Split(line, sep)
+		if len(fields) != 4 {
+			continue
+		}
+		branches = append(branches, RecentBranch{Name: fields[0], Date: fields[1], Relative: fields[2], Subject: fields[3]})
+	}
+	return branches, nil
+}
+
 // DeleteBranch force-deletes a local branch.
 func DeleteBranch(dir, name string) error {
 	_, err := Run(dir, "branch", "-D", name)

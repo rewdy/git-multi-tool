@@ -219,6 +219,23 @@ once you've read the list. The branch you're standing on is left alone
 even when its upstream is gone, and branches you never pushed are never
 candidates at all, only a branch that had an upstream can have lost one.
 
+### `recent-branches`
+
+```sh
+gmt recent-branches
+```
+
+Lists local branches sorted by their latest commit, newest first, with
+the commit's date and time (plus a relative "3 days ago") and subject.
+Your current branch is highlighted. Read-only.
+
+Flags:
+
+| Flag          | Description                                              |
+| ------------- | -------------------------------------------------------- |
+| `-n, --limit` | How many branches to show (default 10, `0` for all)      |
+| `-C, --repo`  | Path to the git repo (defaults to the current directory) |
+
 ### `restore-snapshot`
 
 ```sh
@@ -260,6 +277,7 @@ The curated aliases:
 | `boom` | `nuke`             |
 | `ggp`  | `prune-gone`       |
 | `gpb`  | `prune-branches`   |
+| `glb`  | `recent-branches`  |
 | `gra`  | `reauthor`         |
 | `grs`  | `restore-snapshot` |
 

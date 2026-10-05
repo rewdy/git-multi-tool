@@ -63,6 +63,7 @@ func init() {
 	rootCmd.AddCommand(backToMainCmd)
 	rootCmd.AddCommand(pruneBranchesCmd)
 	rootCmd.AddCommand(pruneGoneCmd)
+	rootCmd.AddCommand(recentBranchesCmd)
 	rootCmd.AddCommand(restoreSnapshotCmd)
 	rootCmd.AddCommand(installAliasesCmd)
 	rootCmd.AddCommand(applyReauthorStepCmd)

@@ -57,6 +57,7 @@ func Catalog() []Alias {
 		{Name: "boom", Subcommand: "nuke", Summary: "blow away all uncommitted changes, tracked and untracked"},
 		{Name: "ggp", Subcommand: "prune-gone", Summary: "fetch --prune, then delete local branches whose remote is gone"},
 		{Name: "gpb", Subcommand: "prune-branches", Summary: "pick local branches to delete, in bulk"},
+		{Name: "glb", Subcommand: "recent-branches", Summary: "list local branches, most recently committed first"},
 		{Name: "gra", Subcommand: "reauthor", Summary: "rewrite the author/committer identity on a run of commits"},
 		{Name: "grs", Subcommand: "restore-snapshot", Summary: "make your working tree look like an old commit"},
 	}
